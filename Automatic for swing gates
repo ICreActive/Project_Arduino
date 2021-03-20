@@ -1,0 +1,114 @@
+int gate = 1;                   // variable condition, 0-open, 1-close, 2-opening, 3 - closing
+unsigned long stime;            //переменная отвечающая за время работы.
+
+void setup() {
+  pinMode(11, OUTPUT);           //powerPin for  12V
+  pinMode(5, OUTPUT);           // start/stop drivers
+  pinMode(9, OUTPUT);           //reverse
+  pinMode(8, OUTPUT);          //interrupter for left
+  pinMode(7, OUTPUT);          //interrupter for right
+  pinMode(6, OUTPUT);          //control lamp
+  pinMode(2, INPUT);            // pin for receiving a signal from the receiver (from the remote control)
+  pinMode(13, OUTPUT);
+
+  // set default value:
+  digitalWrite(13, LOW);
+  digitalWrite(11, HIGH);
+  digitalWrite(9, HIGH);
+  digitalWrite(8, HIGH);
+  digitalWrite(7, HIGH);
+  digitalWrite(6, HIGH);
+  digitalWrite(5, HIGH);
+}
+
+
+void loop() {
+
+  delay (700);
+  if ((digitalRead(2) == 0) && (digitalRead(3) == 1)) {
+
+    switch (gate) {
+
+      case 0:
+        stime = millis();
+        gate = 3;                           //change new condition (closing)
+        //  digitalWrite(8, LOW);
+        digitalWrite(5, LOW);
+        digitalWrite(11, LOW);              // +12V - Closing
+        delay(1000);                       //delay so that the drives do not run against inertia
+        break;
+
+
+      case 1:
+        stime = millis();
+        gate = 2;
+        //  digitalWrite(7, LOW);
+        digitalWrite(9, LOW);              //reverse
+        delay(500);
+        digitalWrite(5, LOW);
+        digitalWrite(11, LOW);              // +12V (opening)
+        delay(1000);
+        break;
+
+
+      case 2:
+        stime = millis();
+        gate = 0;
+        digitalWrite(11, HIGH);              // drivers  off
+        digitalWrite(9, HIGH);               //reverse
+        // digitalWrite(8, HIGH);
+        //  digitalWrite(7, HIGH);
+        delay(1000);
+        break;
+
+
+
+      case 3:
+        stime = millis();
+        gate = 1;
+        digitalWrite(11, HIGH);               // drivers  off
+        //  digitalWrite(8, HIGH);
+        //  digitalWrite(7, HIGH);
+        delay(1000);
+        break;
+
+    }
+  }
+
+
+  // if (millis() - stime >= 10000){        //если разница между текущим и засеченным временем больше --- сек
+  //      digitalWrite(8, HIGH);         //interrupter off
+  // }
+
+
+  // if (millis() - stime >= 5000){        //если разница между текущим и засеченным временем больше --- сек
+  //     digitalWrite(7, HIGH);          //interrupter off
+  // }
+
+
+  if (millis() - stime >= 45000 && gate == 3) {       //if 45 sec closing
+    digitalWrite(11, HIGH);                     //drivers off
+    digitalWrite(9, HIGH);                     //reverse default
+    //      digitalWrite(8, HIGH);                    //interrupter off
+    //       digitalWrite(7, HIGH);                    //interrupter off
+    digitalWrite(5, HIGH);
+    gate = 1;                                  //condition to CLOSE
+  }
+
+  if (millis() - stime >= 45000 && gate == 2) {       //if 45 sec opening
+    digitalWrite(11, HIGH);                    //drivers off
+    digitalWrite(9, HIGH);                    //reverse default
+    //      digitalWrite(8, HIGH);                    //interrupter off
+    //       digitalWrite(7, HIGH);                    //interrupter off
+    digitalWrite(5, HIGH);
+    gate = 0;                                 //condition to OPEN
+  }
+
+  if ((round(millis() / 700) % 2 == 0 && gate == 3) || (round(millis() / 500) % 2 == 0 && gate == 2) ) {
+    digitalWrite(6, LOW);
+  }
+  else {
+    digitalWrite(6, HIGH);
+  }
+
+}
