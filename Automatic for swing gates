@@ -1,7 +1,12 @@
+#include <SoftwareSerial.h>
+#include <DFPlayer_Mini_Mp3.h>
+
+
 int gate = 1;                   // variable condition, 0-open, 1-close, 2-opening, 3 - closing
 unsigned long stime;            //переменная отвечающая за время работы.
 
 void setup() {
+//motor
   pinMode(11, OUTPUT);           //powerPin for  12V
   pinMode(5, OUTPUT);           // start/stop drivers
   pinMode(9, OUTPUT);           //reverse
@@ -19,6 +24,11 @@ void setup() {
   digitalWrite(7, HIGH);
   digitalWrite(6, HIGH);
   digitalWrite(5, HIGH);
+  
+  //Player
+	Serial.begin (9600);
+	mp3_set_serial (Serial);	//set Serial for DFPlayer-mini mp3 module 
+	mp3_set_volume (15);
 }
 
 
@@ -36,6 +46,7 @@ void loop() {
         digitalWrite(5, LOW);
         digitalWrite(11, LOW);              // +12V - Closing
         delay(1000);                       //delay so that the drives do not run against inertia
+        mp3_play (1);
         break;
 
 
@@ -70,6 +81,7 @@ void loop() {
         //  digitalWrite(8, HIGH);
         //  digitalWrite(7, HIGH);
         delay(1000);
+        mp3_play (2);
         break;
 
     }
