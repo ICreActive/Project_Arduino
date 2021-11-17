@@ -1,0 +1,147 @@
+
+#include "FastLED.h"          // библиотека для работы с лентой
+
+#define LED_COUNT 15          // число светодиодов в кольце/ленте
+#define LED_DT 3             // пин, куда подключен DIN ленты
+
+int max_bright = 51;         // максимальная яркость (0 - 255)
+int ledMode = 3;
+
+
+int BOTTOM_INDEX = 0;        // светодиод начала отсчёта
+int TOP_INDEX = int(LED_COUNT / 2);
+int EVENODD = LED_COUNT % 2;
+struct CRGB leds[LED_COUNT];
+int ledsX[LED_COUNT][3];     //-ARRAY FOR COPYING WHATS IN THE LED STRIP CURRENTLY (FOR CELL-AUTOMATA, MARCH, ETC)
+
+int thisdelay = 20;          //-FX LOOPS DELAY VAR
+int thissat = 255;           //-FX LOOPS DELAY VAR
+
+
+void one_color_all(int cred, int cgrn, int cblu) {       //-SET ALL LEDS TO ONE COLOR
+  for (int i = 0 ; i < LED_COUNT; i++ ) {
+    leds[i].setRGB( cred, cgrn, cblu);
+  }
+}
+
+void one_color_allHSV(int ahue) {    //-SET ALL LEDS TO ONE COLOR (HSV)
+  for (int i = 0 ; i < LED_COUNT; i++ ) {
+    leds[i] = CHSV(ahue, thissat, 255);
+  }
+}
+
+void setup()
+{
+  Serial.begin(9600);              // открыть порт для связи
+  LEDS.setBrightness(max_bright);  // ограничить максимальную яркость
+
+  LEDS.addLeds<WS2811, LED_DT, GRB>(leds, LED_COUNT);  // настрйоки для нашей ленты (ленты на WS2811, WS2812, WS2812B)
+  one_color_all(0, 0, 0);          // погасить все светодиоды
+  LEDS.show();                     // отослать команду
+}
+
+void loop() {
+thisdelay = 50;
+rainbowCycle(thisdelay);                   // бегущие огни
+
+//thisdelay = 50;
+//flame();
+
+}
+
+void flame() {                                    //-m22-FLAMEISH EFFECT
+  int idelay = random(0, 35);
+  float hmin = 0.1; float hmax = 45.0;
+  float hdif = hmax - hmin;
+  int randtemp = random(0, 3);
+  float hinc = (hdif / float(TOP_INDEX)) + randtemp;
+  int ihue = hmin;
+  for (int i = 0; i <= TOP_INDEX; i++ ) {
+    ihue = ihue + hinc;
+    leds[i] = CHSV(ihue, thissat, 255);
+    int ih = horizontal_index(i);
+    leds[ih] = CHSV(ihue, thissat, 255);
+    leds[TOP_INDEX].r = 255; leds[TOP_INDEX].g = 255; leds[TOP_INDEX].b = 255;
+    LEDS.show();
+    delay(idelay);
+  }
+}
+
+
+void RunningLights(byte red, byte green, byte blue, int WaveDelay) {
+  int Position = 0;
+
+  for (int i = 0; i < LED_COUNT * 2; i++)
+  {
+    Position++; // = 0; //Position + Rate;
+    for (int i = 0; i < LED_COUNT; i++) {
+      setPixel(i, ((sin(i + Position) * 127 + 128) / 255)*red,
+               ((sin(i + Position) * 127 + 128) / 255)*green,
+               ((sin(i + Position) * 127 + 128) / 255)*blue);
+    }
+
+    FastLED.show();
+    delay(WaveDelay);
+  }
+}
+
+void set_color_led(int adex, int cred, int cgrn, int cblu) {
+  leds[adex].setRGB( cred, cgrn, cblu);
+}
+
+//---FIND INDEX OF HORIZONAL OPPOSITE LED
+int horizontal_index(int i) {
+  //-ONLY WORKS WITH INDEX < TOPINDEX
+  if (i == BOTTOM_INDEX) {
+    return BOTTOM_INDEX;
+  }
+  if (i == TOP_INDEX && EVENODD == 1) {
+    return TOP_INDEX + 1;
+  }
+  if (i == TOP_INDEX && EVENODD == 0) {
+    return TOP_INDEX;
+  }
+  return LED_COUNT - i;
+}
+
+void rainbowCycle(int SpeedDelay) {
+  byte *c;
+  uint16_t i, j;
+
+  for (j = 0; j < 256 * 5; j++) { // 5 cycles of all colors on wheel
+    for (i = 0; i < LED_COUNT; i++) {
+      c = Wheel(((i * 256 / LED_COUNT) + j) & 255);
+      setPixel(i, *c, *(c + 1), *(c + 2));
+    }
+    FastLED.show();
+    delay(SpeedDelay);
+  }
+}
+byte * Wheel(byte WheelPos) {
+  static byte c[3];
+
+  if (WheelPos < 85) {
+    c[0] = WheelPos * 3;
+    c[1] = 255 - WheelPos * 3;
+    c[2] = 0;
+  } else if (WheelPos < 170) {
+    WheelPos -= 85;
+    c[0] = 255 - WheelPos * 3;
+    c[1] = 0;
+    c[2] = WheelPos * 3;
+  } else {
+    WheelPos -= 170;
+    c[0] = 0;
+    c[1] = WheelPos * 3;
+    c[2] = 255 - WheelPos * 3;
+  }
+
+  return c;
+}
+
+
+void setPixel(int Pixel, byte red, byte green, byte blue) {
+  leds[Pixel].r = red;
+  leds[Pixel].g = green;
+  leds[Pixel].b = blue;
+}
