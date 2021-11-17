@@ -1,0 +1,26 @@
+#include <SoftwareSerial.h>
+#include <DFPlayer_Mini_Mp3.h>
+unsigned long stime;
+  int i = 0;
+
+void setup () {
+    Serial.begin (9600);
+    mp3_set_serial (Serial);    //set Serial for DFPlayer-mini mp3 module 
+  delay (100);
+  mp3_set_volume (20);
+
+}
+void loop () {
+ mp3_play (4);  // Произрываем "mp3/0002.mp3"
+delay (30000);
+
+// delay (10000);
+// mp3_play (4); // Произрываем "mp3/0005.mp3"
+// delay (20000);
+//// mp3_play (1); // Произрываем "mp3/0001.mp3"
+//// delay (5000);
+// mp3_play (4); // Произрываем "mp3/0004.mp3"
+// delay (5000);
+// mp3_play (3); // Произрываем "mp3/0003.mp3"
+// delay (5000);
+}
