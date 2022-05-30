@@ -1,0 +1,101 @@
+#include <SoftwareSerial.h>
+#include <DFPlayer_Mini_Mp3.h>
+
+int gate = 1;                   // variable condition, 0-open, 1-close, 2-opening, 3 - closing
+unsigned long stime;            //переменная отвечающая за время работы.
+volatile boolean actionState = LOW;
+
+void setup() {
+//motor
+  pinMode(2, INPUT);            // pin for receiving a signal from the receiver (from the remote control)
+  pinMode(3, INPUT);
+  pinMode(5, OUTPUT);          // start/stop drivers
+  pinMode(6, OUTPUT);          //control lamp
+  pinMode(7, OUTPUT);          //interrupter for right
+  pinMode(8, OUTPUT);          //interrupter for left
+  pinMode(9, OUTPUT);          //reverse
+  pinMode(11, OUTPUT);           //powerPin for  12V
+  pinMode(13, OUTPUT);
+
+  // set default value:
+  digitalWrite(5, HIGH);
+  digitalWrite(6, HIGH);
+  digitalWrite(7, HIGH);
+  digitalWrite(8, HIGH);
+  digitalWrite(9, HIGH);
+  digitalWrite(11, HIGH);
+  digitalWrite(13, LOW);
+  
+  attachInterrupt(digitalPinToInterrupt(2),mainAction, FALLING); // HIGH to LOW (RISING - LOW TO HIGH)
+}
+
+void activateGates() {
+      switch (gate) {
+
+      case 0:
+        stime = millis();
+        gate = 3;                           //change new condition (closing)
+        digitalWrite(5, LOW);
+        digitalWrite(11, LOW);              // +12V - Closing
+        delay(1000);                       //delay so that the drives do not run against inertia
+        break;
+
+
+      case 1:
+        stime = millis();
+        gate = 2;
+        digitalWrite(9, LOW);              //reverse
+        delay(500);
+        digitalWrite(5, LOW);
+        digitalWrite(11, LOW);              // +12V (opening)
+        delay(1000);
+        break;
+
+
+      case 2:
+        stime = millis();
+        gate = 0;
+        digitalWrite(11, HIGH);              // drivers  off
+        digitalWrite(9, HIGH);               //reverse
+        delay(1000);
+        break;
+
+
+
+      case 3:
+        stime = millis();
+        gate = 1;
+        digitalWrite(11, HIGH);               // drivers  off
+        delay(1000);
+        break;
+
+    }
+  }
+void driverOff (){
+    digitalWrite(11, HIGH);                     //drivers off
+    digitalWrite(9, HIGH);                     //reverse default
+    digitalWrite(5, HIGH);  
+}
+
+void deactivateGates() {
+  
+  if (millis() - stime >= 45000 && gate == 3) {       //if 45 sec closing
+    driverOff();
+    gate = 1;                                  //condition to CLOSE
+  }
+
+  if (millis() - stime >= 45000 && gate == 2) {       //if 45 sec opening
+    driverOff();
+    gate = 0;                                 //condition to OPEN
+  }
+}
+
+void mainAction() {
+      activateGates();
+      deactivateGates();
+  }
+
+void loop() {
+ 
+
+}
